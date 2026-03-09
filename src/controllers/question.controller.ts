@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { prisma } from '../lib/prisma'
+import { io } from '../server'
 
 export const getQuestions = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -22,6 +23,12 @@ export const createQuestion = async (req: Request, res: Response): Promise<void>
       data: { worksheetId, text, maxScore: maxScore || 100, orderIndex: count, createdById: req.user!.userId },
       include: { createdBy: { select: { id: true, name: true } } }
     })
+
+
+     // Emit to all connected clients
+    io.emit('question:added', { worksheetId, question })
+
+    
     res.status(201).json(question)
   } catch { res.status(500).json({ error: 'Internal server error' }) }
 }
