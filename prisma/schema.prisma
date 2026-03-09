@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DIRECTOR
+  TEACHER
+  STUDENT
+}
+
+enum GradeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AnswerStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  worksheetsCreated Worksheet[]
+  questionsCreated  Question[]
+  answers           Answer[]
+  gradesGiven       Grade[]            @relation("TeacherGrades")
+  gradesApproved    Grade[]            @relation("DirectorApprovals")
+  annotations       AnswerAnnotation[]
+  refreshTokens     RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Workbook {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  worksheets  Worksheet[]
+}
+
+model Worksheet {
+  id          String     @id @default(uuid())
+  workbookId  String
+  workbook    Workbook   @relation(fields: [workbookId], references: [id], onDelete: Cascade)
+  title       String
+  body        String     @default("")
+  orderIndex  Int        @default(0)
+  createdById String
+  createdBy   User       @relation(fields: [createdById], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  questions   Question[]
+}
+
+model Question {
+  id          String    @id @default(uuid())
+  worksheetId String
+  worksheet   Worksheet @relation(fields: [worksheetId], references: [id], onDelete: Cascade)
+  text        String
+  orderIndex  Int       @default(0)
+  maxScore    Float     @default(100)
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  answers     Answer[]
+}
+
+model Answer {
+  id          String       @id @default(uuid())
+  questionId  String
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User         @relation(fields: [studentId], references: [id])
+  content     String       @default("")
+  status      AnswerStatus @default(DRAFT)
+  submittedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  grade       Grade?
+  annotations AnswerAnnotation[]
+
+  @@unique([questionId, studentId])
+}
+
+model AnswerAnnotation {
+  id            String   @id @default(uuid())
+  answerId      String
+  answer        Answer   @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  teacherId     String
+  teacher       User     @relation(fields: [teacherId], references: [id])
+  originalText  String
+  suggestedText String
+  comment       String?
+  startOffset   Int
+  endOffset     Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Grade {
+  id              String      @id @default(uuid())
+  answerId        String      @unique
+  answer          Answer      @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  teacherId       String
+  teacher         User        @relation("TeacherGrades", fields: [teacherId], references: [id])
+  score           Float
+  feedback        String?
+  status          GradeStatus @default(PENDING)
+  directorId      String?
+  director        User?       @relation("DirectorApprovals", fields: [directorId], references: [id])
+  directorComment String?
+  reviewedAt      DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
