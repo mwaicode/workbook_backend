@@ -45,6 +45,11 @@ export const updateQuestion = async (req: Request, res: Response): Promise<void>
       data: { text: req.body.text, maxScore: req.body.maxScore },
       include: { createdBy: { select: { id: true, name: true } } }
     })
+
+
+     io.emit('question:added', { question })
+
+
     res.json(updated)
   } catch { res.status(500).json({ error: 'Internal server error' }) }
 }
@@ -57,6 +62,9 @@ export const deleteQuestion = async (req: Request, res: Response): Promise<void>
       res.status(403).json({ error: 'Can only delete your own questions' }); return
     }
     await prisma.question.delete({ where: { id: req.params.id } })
+
+     io.emit('question:added', {  question })
+
     res.json({ message: 'Question deleted' })
   } catch { res.status(500).json({ error: 'Internal server error' }) }
 }
