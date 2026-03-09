@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { prisma } from '../lib/prisma'
-import { io } from '../server'  // ← add this
+import { io } from '../server' 
 
 export const getWorkbooks = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -17,7 +17,7 @@ export const createWorkbook = async (req: Request, res: Response): Promise<void>
     const { title, description } = req.body
     if (!title) { res.status(400).json({ error: 'Title is required' }); return }
     const workbook = await prisma.workbook.create({ data: { title, description } })
-    io.emit('workbook:created', { workbookId: workbook.id })  // ← add this
+    io.emit('workbook:created', { workbookId: workbook.id })  
     res.status(201).json(workbook)
   } catch { res.status(500).json({ error: 'Internal server error' }) }
 }
@@ -50,7 +50,7 @@ export const createWorksheet = async (req: Request, res: Response): Promise<void
       data: { workbookId, title, body: body || '', orderIndex: count, createdById: req.user!.userId },
       include: { createdBy: { select: { id: true, name: true, role: true } }, questions: true }
     })
-    io.emit('worksheet:created', { workbookId, worksheetId: worksheet.id })  // ← add this
+    io.emit('worksheet:created', { workbookId, worksheetId: worksheet.id })  
     res.status(201).json(worksheet)
   } catch { res.status(500).json({ error: 'Internal server error' }) }
 }
