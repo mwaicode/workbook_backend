@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { ok, created, notFound, serverError, forbidden } from '../utils/response';
 
-// ── Schemas ────────────────────────────────────────────────────────
+
 
 export const CreateWorksheetSchema = z.object({
   title:      z.string().min(1).max(200),
@@ -17,7 +17,7 @@ export const UpdateWorksheetSchema = z.object({
   orderIndex: z.number().int().min(0).optional(),
 });
 
-// ── Controllers ────────────────────────────────────────────────────
+
 
 const WORKSHEET_INCLUDE = {
   createdBy: { select: { id: true, name: true, role: true } },
@@ -29,7 +29,7 @@ const WORKSHEET_INCLUDE = {
   },
 };
 
-/** GET /api/workbooks/:workbookId/worksheets */
+
 export async function listWorksheets(req: Request, res: Response): Promise<void> {
   try {
     const worksheets = await prisma.worksheet.findMany({
@@ -44,7 +44,7 @@ export async function listWorksheets(req: Request, res: Response): Promise<void>
   }
 }
 
-/** GET /api/worksheets/:id */
+
 export async function getWorksheet(req: Request, res: Response): Promise<void> {
   try {
     const worksheet = await prisma.worksheet.findUnique({
@@ -59,7 +59,7 @@ export async function getWorksheet(req: Request, res: Response): Promise<void> {
   }
 }
 
-/** POST /api/workbooks/:workbookId/worksheets — [DIRECTOR] */
+
 export async function createWorksheet(req: Request, res: Response): Promise<void> {
   try {
     const { title, body, orderIndex } = req.body as z.infer<typeof CreateWorksheetSchema>;
@@ -93,7 +93,6 @@ export async function createWorksheet(req: Request, res: Response): Promise<void
   }
 }
 
-/** PUT /api/worksheets/:id — [DIRECTOR] */
 export async function updateWorksheet(req: Request, res: Response): Promise<void> {
   try {
     const { title, body, orderIndex } = req.body as z.infer<typeof UpdateWorksheetSchema>;
@@ -115,7 +114,7 @@ export async function updateWorksheet(req: Request, res: Response): Promise<void
   }
 }
 
-/** DELETE /api/worksheets/:id — [DIRECTOR] */
+
 export async function deleteWorksheet(req: Request, res: Response): Promise<void> {
   try {
     await prisma.worksheet.delete({ where: { id: req.params.id } });
